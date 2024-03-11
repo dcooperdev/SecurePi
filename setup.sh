@@ -1,26 +1,60 @@
 #!/bin/bash
 
-change_status() {
+next_step() {
     rm -f status.txt
     echo $1 > status.txt
 }
 
-currentPath=$(pwd)
+configure_user() {
+    # Ask the user for the new username
+    read -p "Enter the new username: " NEW_USER
 
-# Directory where the files are located
-directory="$currentPath/src"
+    # Change the default password
+    echo "Change the current password for $NEW_USER"
+    passwd
 
-# Filter files that follow the "number-name.sh" format
-files=$(find "$directory" -type f -name '[0-9]*-*.sh')
+    # Change the default username
+    sudo useradd -m "$NEW_USER" -G sudo
+    sudo passwd "$NEW_USER"
 
-# Sort the file names alphabetically
-sorted_names=$(echo "$files" | tr ' ' '\n' | sort)
+    # Configure sudoers for the new user
+    sudo visudo
 
-# Print the sorted list
-# echo "$sorted_names"
+    # Remove the "pi" user
+    sudo deluser pi
+    sudo deluser --remove-home pi
+}
+
+configure_firewall() {
+    # Install and configure UFW (firewall)
+    sudo apt install -y ufw
+    sudo ufw allow ssh
+
+    # Ask the user if they want to enable HTTP
+    read -p "Do you want to enable HTTP? (y/n): " ENABLE_HTTP
+    if [[ "$ENABLE_HTTP" == "y" ]]; then
+        sudo ufw allow http
+    fi
+
+    # Ask the user if they want to enable HTTPS
+    read -p "Do you want to enable HTTPS? (y/n): " ENABLE_HTTPS
+    if [[ "$ENABLE_HTTPS" == "y" ]]; then
+        sudo ufw allow https
+    fi
+
+    sudo ufw enable
+}
+
+configure_ap() {
+    # Ask the user if they want to enable RaspAP
+    read -p "Do you want to enable RaspAP? (y/n): " ENABLE_RASPAP
+    if [[ "$ENABLE_RASPAP" == "y" ]]; then
+        curl -sL https://install.raspap.com | bash
+    fi
+}
 
 if [ ! -f status.txt ]; then
-    change_status start
+    next_step start
 fi
 
 status=$(<status.txt)
@@ -28,29 +62,32 @@ status=$(<status.txt)
 case $status in
     start)
         echo "Starting configuration"
-        change_status 'update'
+        next_step 'update'
+        sudo apt update
+        sudo apt full-upgrade
+        sudo reboot
         ;;
     update)
         echo "Resuming in step update configuration"
-        change_status 'user'
-        # Agrega aquí los comandos que deseas ejecutar para la opción 2
+        next_step 'user'
+        configure_user
         ;;
     user)
         echo "Resuming in user configuration"
-        change_status 'firewall'
-        # Agrega aquí los comandos que deseas ejecutar para la opción 3
+        next_step 'firewall'
+        configure_firewall
         ;;
     firewall)
-        echo "Resuming in firewall configuration"
-        change_status 'ap'
-        # Agrega aquí los comandos que deseas ejecutar para la opción 4
+        echo "Resuming in ap configuration"
+        next_step 'ap'
+        configure_ap
         ;;
     ap)
-        echo "Resuming in step ap configuration"
-        change_status 'configured'
-        ;;
-    configured)
         echo "All is configured; Remove the configured file to reset script."
+        next_step 'configured'
+        ;;
+    *)
+        echo "Status not found or corrupted. Delete status.txt file and re run the script."
         ;;
 esac
 
