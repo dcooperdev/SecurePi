@@ -93,42 +93,6 @@ case $status in
         ;;
 esac
 
-: <<'END_COMMENT'
-
-if [ -f "start" ]; then
-
-sudo apt update
-sudo apt full-upgrade
-
-touch update
-
-#sudo reboot
-
-touch user
-rm start
-echo "Resuming in user configuration"
-fi
-
-if [ -f "user" ]; then
-touch firewall
-rm user
-echo "Resuming in firewall configuration"
-fi
-
-if [ -f "firewall" ]; then
-touch ap
-rm firewall
-echo "Resuming in step ap configuration"
-fi
-
-if [ -f "ap" ]; then
-rm ap
-touch configured
-echo "All is configured; Remove the configured file to reset script."
-fi
-
-END_COMMENT
-
 # Other security configurations (optional):
 # - SELinux or AppArmor
 # - More specific firewall rules
