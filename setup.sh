@@ -1,5 +1,10 @@
 #!/bin/bash
 
+change_status() {
+    rm -f status.txt
+    echo $1 > status.txt
+}
+
 currentPath=$(pwd)
 
 # Directory where the files are located
@@ -12,12 +17,54 @@ files=$(find "$directory" -type f -name '[0-9]*-*.sh')
 sorted_names=$(echo "$files" | tr ' ' '\n' | sort)
 
 # Print the sorted list
-echo "$sorted_names"
+# echo "$sorted_names"
 
-touch start
+if [ ! -f status.txt ]; then
+    change_status start
+fi
+
+status=$(<status.txt)
+
+case $status in
+    start)
+        echo "Starting configuration"
+        change_status 'update'
+        ;;
+    update)
+        echo "Resuming in step update configuration"
+        change_status 'user'
+        # Agrega aquí los comandos que deseas ejecutar para la opción 2
+        ;;
+    user)
+        echo "Resuming in user configuration"
+        change_status 'firewall'
+        # Agrega aquí los comandos que deseas ejecutar para la opción 3
+        ;;
+    firewall)
+        echo "Resuming in firewall configuration"
+        change_status 'ap'
+        # Agrega aquí los comandos que deseas ejecutar para la opción 4
+        ;;
+    ap)
+        echo "Resuming in step ap configuration"
+        change_status 'configured'
+        ;;
+    configured)
+        echo "All is configured; Remove the configured file to reset script."
+        ;;
+esac
+
+: <<'END_COMMENT'
 
 if [ -f "start" ]; then
-/bin/bash $sorted_names[0]
+
+sudo apt update
+sudo apt full-upgrade
+
+touch update
+
+#sudo reboot
+
 touch user
 rm start
 echo "Resuming in user configuration"
@@ -40,6 +87,8 @@ rm ap
 touch configured
 echo "All is configured; Remove the configured file to reset script."
 fi
+
+END_COMMENT
 
 # Other security configurations (optional):
 # - SELinux or AppArmor
