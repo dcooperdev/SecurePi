@@ -3,6 +3,6 @@
 sudo apt update
 sudo apt full-upgrade
 
-#create step file
+touch update
 
-sudo reboot
+#sudo reboot

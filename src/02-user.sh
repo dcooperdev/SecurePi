@@ -17,3 +17,5 @@ sudo visudo
 # Remove the "pi" user
 sudo deluser pi
 sudo deluser --remove-home pi
+
+touch user

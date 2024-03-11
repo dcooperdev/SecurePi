@@ -17,3 +17,5 @@ if [[ "$ENABLE_HTTPS" == "y" ]]; then
 fi
 
 sudo ufw enable
+
+touch firewall
