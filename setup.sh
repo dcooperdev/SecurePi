@@ -76,11 +76,13 @@ case $status in
         echo "Resuming in user configuration"
         next_step 'firewall'
         configure_firewall
+        sudo reboot
         ;;
     firewall)
         echo "Resuming in ap configuration"
         next_step 'ap'
         configure_ap
+        sudo reboot
         ;;
     ap)
         echo "All is configured; Remove the configured file to reset script."
